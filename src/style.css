@@ -44,7 +44,8 @@ body, html {
 }
 
 body {
-	background-image: url('/looptile.png');
+	background-image: url('/grunge.png');
+	background-image: url('/woven.png');
 	margin: 0;
 	padding: 0;
 	background-color: black;

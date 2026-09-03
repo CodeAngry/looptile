@@ -102,7 +102,7 @@ jobs:
             docker container start "${CONTAINER_NAME}"
 
             echo "Waiting for container to start..."
-            sleep 2
+            sleep 1
 
             echo "Container logs:"
             docker container logs --tail 256 "${CONTAINER_NAME}"
