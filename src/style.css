@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poiret+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poiret+One&family=Redacted+Script:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@200..700&display=swap');
+
+.poiret-one-regular {
+	font-family: "Poiret One", sans-serif;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.yanone-kaffeesatz-regular {
+	font-family: "Yanone Kaffeesatz", sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.redacted-script-light {
+	font-family: "Redacted Script", cursive;
+	font-weight: 300;
+	font-style: normal;
+}
+  
+.redacted-script-regular {
+	font-family: "Redacted Script", cursive;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.redacted-script-bold {
+	font-family: "Redacted Script", cursive;
+	font-weight: 700;
+	font-style: normal;
+} 
+
+body, html {
+  margin: 0;
+  width: 100%;
+  min-height: 100svh;
+  height: 100%;
+  min-height: 100vh;
+  line-height: normal;
+}
+
+body {
+	background-image: url('/looptile.png');
+	margin: 0;
+	padding: 0;
+	background-position: top left;
+	background-repeat: repeat;
+	background-size: auto;
+	background-color: black;
+	background-attachment: fixed;
+}
+
+h1 {
+	font-size: 1.25rem;
+	margin: 0;
+	padding: 0;
+}
+
+div, p {
+	font-size: 1.25rem;
+	margin: 0;
+	padding: 0;
+}
+
+#logo {
+	position: fixed;
+	left: 1rem;
+	bottom: 1rem;
+	right: 1rem;
+	user-select: none;
+	pointer-events: auto;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-evenly;
+
+	color: rgba(255, 255, 255, 1);
+	/* border: 1px solid rgba(255, 255, 255, 0.25); */
+	border-radius: 0;
+
+	opacity: .75;
+	transition: opacity 0.25s ease-in-out;
+
+	&>div {
+		text-align: center;
+		display: inline-block;
+		background-color: rgba(0, 0, 0, 1);
+		padding: 0.5rem 0.75rem;
+		box-shadow: rgba(50, 50, 93, 0.25) 0px 25px 50px -10px, rgba(0, 0, 0, 0.3) 0px 15px 30px -15px;
+		border-radius: 0.5rem;
+	}
+
+	&:hover {
+		opacity: 1;
+	}
+}

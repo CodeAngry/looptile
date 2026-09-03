@@ -1,0 +1,19 @@
+[*.ts]
+indent_style = tab
+indent_size = 4
+format_on_save = true
+format_on_type = true
+
+[*.js]
+indent_style = tab
+indent_size = 4
+format_on_save = true
+format_on_type = true
+
+[*.yaml, *.yml]
+indent_style = space
+indent_size = 2
+indent_with_tabs = false
+indent_width = 2
+format_on_save = true
+format_on_type = true

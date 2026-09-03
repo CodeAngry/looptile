@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: 'Setup SSH'
+description: 'Sets up SSH keys, known_hosts, and config alias.'
+
+inputs:
+  ssh-key:
+    description: 'SSH Key'
+    required: true
+  ssh-host:
+    description: 'SSH Host'
+    required: true
+  ssh-user:
+    description: 'SSH Login'
+    required: true
+  ssh-alias:
+    description: 'SSH Alias'
+    required: false
+    default: 'main'
+  ssh-strict:
+    description: 'SSH Strict'
+    required: false
+    default: 'no'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure SSH
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh-key }}" > ~/.ssh/${{ inputs.ssh-alias }}.key
+        chmod 600 ~/.ssh/${{ inputs.ssh-alias }}.key
+        ssh-keyscan -H "${{ inputs.ssh-host }}" >> ~/.ssh/known_hosts
+        cat >> ~/.ssh/config <<EOS
+        Host ${{ inputs.ssh-alias }}
+          HostName ${{ inputs.ssh-host }}
+          User ${{ inputs.ssh-user }}
+          IdentityFile ~/.ssh/${{ inputs.ssh-alias }}.key
+          StrictHostKeyChecking ${{ inputs.ssh-strict }}
+        EOS

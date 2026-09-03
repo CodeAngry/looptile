@@ -1,0 +1,112 @@
+name: Recycle
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 'Build the application'
+        required: true
+        default: 'true'
+      deploy:
+        description: 'Deploy the application'
+        required: true
+        default: 'true'
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  HETZNER_DCR_PASS: ${{ secrets.HETZNER_DCR_PASS }}
+  HETZNER_DCR_USER: ${{ secrets.HETZNER_DCR_USER }}
+  HETZNER_DCR_HOST: ${{ secrets.HETZNER_DCR_HOST }}
+  HETZNER_SSH_ADRIP: ${{ secrets.HETZNER_SSH_ADRIP }}
+  HETZNER_SSH_LOGIN: ${{ secrets.HETZNER_SSH_LOGIN }}
+  HETZNER_SSH_TOKEN: ${{ secrets.HETZNER_SSH_TOKEN }}
+  CONTAINER_NAME: "looptile.app"
+  NETWORK_NAME: "nginx"
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Configure Local Docker
+        run: docker login "${HETZNER_DCR_HOST}" --username "${HETZNER_DCR_USER}" --password-stdin <<< "${HETZNER_DCR_PASS}"
+
+      - name: Local Docker Build
+        if: ${{ github.event.inputs.build == 'true' || github.event.inputs.deploy == 'true' || github.event_name == 'push' || github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          echo "Building Docker image..."
+          docker image build --pull \
+            --file "./.docker/compile.Dockerfile" \
+            --tag "${CONTAINER_NAME}:latest" \
+            "."
+          
+          echo "Docker image built successfully: '${CONTAINER_NAME}:latest'."
+          docker image tag "${CONTAINER_NAME}:latest" "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest"
+
+          echo "Pushing image to remote registry..."
+          docker image push "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest"
+
+      - name: Configure Remote Access
+        if: ${{ github.event.inputs.deploy == 'true' || github.event_name == 'push' || github.event_name == 'pull_request' }}
+        uses: ./.github/actions/setup-ssh
+        with:
+          ssh-key: ${{ secrets.HETZNER_SSH_TOKEN }}
+          ssh-host: ${{ secrets.HETZNER_SSH_ADRIP }}
+          ssh-user: ${{ secrets.HETZNER_SSH_LOGIN }}
+          ssh-alias: 'hetzner1'
+          ssh-strict: 'no'
+
+      - name: Remote Docker Deploy
+        if: ${{ github.event.inputs.deploy == 'true' || github.event_name == 'push' || github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          ssh hetzner1 <<EOF
+            set -e
+
+            echo "Logging into Hetzner Docker Registry..."
+            docker login "${HETZNER_DCR_HOST}" --username "${HETZNER_DCR_USER}" --password-stdin <<< "${HETZNER_DCR_PASS}"
+
+            echo "Container stats:"
+            docker container stats --no-stream --all
+
+            docker container stop "${CONTAINER_NAME}" || true
+            docker container wait "${CONTAINER_NAME}" || true
+            docker container remove "${CONTAINER_NAME}" || true
+
+            echo "Pulling image from remote registry..."
+            docker image tag "${CONTAINER_NAME}:latest" "${CONTAINER_NAME}:backup" || true
+            docker image remove "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest" || true
+            docker image remove "${CONTAINER_NAME}:latest" || true
+            docker image pull "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest"
+            docker image tag "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest" "${CONTAINER_NAME}:latest"
+
+            echo "Creating container..."
+            docker container create \
+              --name "${CONTAINER_NAME}" \
+              --network="${NETWORK_NAME}" \
+              --log-driver=json-file --log-opt max-size=8m --log-opt max-file=8 \
+              "${HETZNER_DCR_HOST}/${CONTAINER_NAME}:latest"
+            
+            echo "Starting container..."
+            docker container start "${CONTAINER_NAME}"
+
+            echo "Waiting for container to start..."
+            sleep 2
+
+            echo "Container logs:"
+            docker container logs --tail 256 "${CONTAINER_NAME}"
+
+            echo "Container stats:"
+            docker container stats --no-stream --all
+          EOF
